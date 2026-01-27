@@ -1,0 +1,30 @@
+.topbar {
+    padding: 20px;
+    text-align: center;
+    user-select: none;
+}
+
+.logo {
+    font-size: 4rem;
+    font-family: 'Product Sans', Arial, sans-serif;
+    font-weight: 400;
+    letter-spacing: -2px;
+    margin: 0;
+    display: inline-block;
+}
+
+.logo-letter {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.logo-letter:hover {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+@media (max-width: 768px) {
+    .logo {
+        font-size: 2.5rem;
+        letter-spacing: -1px;
+    }
+}

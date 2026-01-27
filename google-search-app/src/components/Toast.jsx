@@ -1,0 +1,25 @@
+import React from 'react';
+import './Toast.css';
+
+const Toast = ({ message, type = 'info', onClose }) => {
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️',
+    };
+
+    return (
+        <div className={`toast toast-${type}`} role="alert">
+            <span className="toast-icon">{icons[type]}</span>
+            <span className="toast-message">{message}</span>
+            {onClose && (
+                <button className="toast-close" onClick={onClose} aria-label="Close">
+                    ✕
+                </button>
+            )}
+        </div>
+    );
+};
+
+export default Toast;

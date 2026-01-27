@@ -1,0 +1,57 @@
+.greeting-card {
+    background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    max-width: 500px;
+    display: flex;
+    gap: 16px;
+}
+
+.greeting-icon {
+    font-size: 40px;
+}
+
+.greeting-content {
+    flex: 1;
+}
+
+.greeting-response {
+    font-size: 18px;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+.suggested-label {
+    font-size: 13px;
+    opacity: 0.9;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.suggested-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.suggested-item {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggested-item:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.suggested-item:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}

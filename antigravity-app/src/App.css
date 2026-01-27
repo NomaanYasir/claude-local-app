@@ -1,0 +1,90 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.1s ease;
+}
+
+.app.shaking {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+
+  10% {
+    transform: translateX(-10px) translateY(-5px);
+  }
+
+  20% {
+    transform: translateX(10px) translateY(5px);
+  }
+
+  30% {
+    transform: translateX(-10px) translateY(5px);
+  }
+
+  40% {
+    transform: translateX(10px) translateY(-5px);
+  }
+
+  50% {
+    transform: translateX(-5px) translateY(10px);
+  }
+
+  60% {
+    transform: translateX(5px) translateY(-10px);
+  }
+
+  70% {
+    transform: translateX(-5px) translateY(-5px);
+  }
+
+  80% {
+    transform: translateX(5px) translateY(5px);
+  }
+
+  90% {
+    transform: translateX(-5px) translateY(5px);
+  }
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 100px;
+  position: relative;
+}
+
+.physics-element {
+  transition: none;
+  will-change: transform;
+}
+
+.physics-element.resetting {
+  transition: transform 0.5s ease-out;
+}
+
+.toasts-container {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 60px;
+  }
+}

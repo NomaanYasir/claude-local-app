@@ -1,0 +1,122 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    position: relative;
+}
+
+.header-minimal {
+    border-bottom: 1px solid #ebebeb;
+    padding: 10px 20px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-logo {
+    font-size: 22px;
+    font-weight: 500;
+    text-decoration: none;
+    margin-right: 20px;
+}
+
+.logo-g {
+    color: #4285f4;
+}
+
+.logo-o1 {
+    color: #ea4335;
+}
+
+.logo-o2 {
+    color: #fbbc05;
+}
+
+.logo-g2 {
+    color: #4285f4;
+}
+
+.logo-l {
+    color: #34a853;
+}
+
+.logo-e {
+    color: #ea4335;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-link {
+    color: #202124;
+    text-decoration: none;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.header-link:hover {
+    text-decoration: underline;
+}
+
+.labs-button,
+.apps-button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.labs-button:hover,
+.apps-button:hover {
+    background-color: #f8f9fa;
+}
+
+.avatar-button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #1a73e8;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .header-link {
+        display: none;
+    }
+
+    .header {
+        padding: 10px;
+    }
+
+    .labs-button {
+        display: none;
+    }
+}

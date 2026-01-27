@@ -1,0 +1,73 @@
+.knowledge-card {
+    background: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 350px;
+}
+
+.kc-image-container {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.kc-image {
+    max-width: 180px;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.kc-title {
+    font-size: 24px;
+    font-weight: 400;
+    color: #202124;
+    margin: 0 0 5px 0;
+}
+
+.kc-type {
+    font-size: 13px;
+    color: #70757a;
+    margin: 0 0 15px 0;
+}
+
+.kc-description {
+    font-size: 14px;
+    color: #4d5156;
+    line-height: 1.58;
+    margin: 0 0 20px 0;
+}
+
+.kc-facts {
+    border-top: 1px solid #ebebeb;
+    padding-top: 15px;
+}
+
+.kc-fact {
+    display: flex;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.kc-fact:last-child {
+    border-bottom: none;
+}
+
+.kc-fact-label {
+    color: #70757a;
+    min-width: 100px;
+    flex-shrink: 0;
+}
+
+.kc-fact-value {
+    color: #202124;
+    word-break: break-word;
+}
+
+@media (max-width: 1024px) {
+    .knowledge-card {
+        max-width: 100%;
+        margin-bottom: 20px;
+    }
+}

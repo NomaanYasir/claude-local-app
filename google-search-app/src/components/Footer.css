@@ -1,0 +1,137 @@
+.footer {
+    background-color: #f2f2f2;
+    margin-top: auto;
+    font-size: 14px;
+    color: #70757a;
+    padding: 15px 30px;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.footer-left,
+.footer-right {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.footer-center {
+    flex: 1;
+    text-align: center;
+}
+
+.footer-banner {
+    font-size: 13px;
+    color: #70757a;
+}
+
+.footer a {
+    color: #70757a;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+.test-panel-toggle {
+    background: none;
+    border: 1px solid #dadce0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #70757a;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.test-panel-toggle:hover {
+    background-color: #e8e8e8;
+}
+
+.test-panel {
+    position: fixed;
+    bottom: 60px;
+    right: 20px;
+    background: white;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 350px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+}
+
+.test-panel h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: #202124;
+}
+
+.test-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+}
+
+.test-panel li {
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.test-panel li:last-child {
+    border-bottom: none;
+}
+
+.test-panel label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.test-panel input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+.test-panel .checked {
+    text-decoration: line-through;
+    color: #34a853;
+}
+
+.test-panel button {
+    width: 100%;
+    padding: 8px;
+    background: #f8f9fa;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.test-panel button:hover {
+    background: #e8e8e8;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer-left,
+    .footer-right {
+        justify-content: center;
+    }
+
+    .footer-center {
+        order: -1;
+    }
+}
