@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  tasks     Task[]
+  feedbacks Feedback[]
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  course      String?
+  dueDate     DateTime?
+  notes       String
+  completed   Boolean   @default(false)
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  outputs     AIOutput[]
+  feedbacks   Feedback[]
+  createdAt   DateTime  @default(now())
+}
+
+model AIOutput {
+  id        Int      @id @default(autoincrement())
+  task      Task     @relation(fields: [taskId], references: [id])
+  taskId    Int
+  type      String   // summary | flashcards | quiz | plan
+  content   String   // JSON string for structured outputs
+  feedbacks Feedback[]
+  createdAt DateTime @default(now())
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  output    AIOutput @relation(fields: [outputId], references: [id])
+  outputId  Int
+  task      Task     @relation(fields: [taskId], references: [id])
+  taskId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  message   String
+  createdAt DateTime @default(now())
+}

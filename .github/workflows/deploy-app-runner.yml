@@ -1,0 +1,124 @@
+name: Build and Deploy to AWS App Runner via ECR
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Ensure ECR repos exist
+        run: |
+          aws ecr describe-repositories --repository-names studybuddy-server || aws ecr create-repository --repository-name studybuddy-server
+          aws ecr describe-repositories --repository-names studybuddy-client || aws ecr create-repository --repository-name studybuddy-client
+
+      - name: Build & push server image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd server
+          docker build -t $ECR_REGISTRY/studybuddy-server:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/studybuddy-server:$IMAGE_TAG
+
+      - name: Create or update backend App Runner service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          set -euo pipefail
+          IMAGE_URI=${ECR_REGISTRY}/studybuddy-server:${IMAGE_TAG}
+          SERVICE_NAME=studybuddy-backend
+
+          EXISTING_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text || true)
+
+          SRC_CFG=$(cat <<JSON
+{"ImageRepository":{"ImageIdentifier":"${IMAGE_URI}","ImageRepositoryType":"ECR","ImageConfiguration":{"Port":"4000","RuntimeEnvironmentVariables":[{"Name":"DATABASE_URL","Value":"${DATABASE_URL}"},{"Name":"JWT_SECRET","Value":"${JWT_SECRET}"},{"Name":"OPENAI_API_KEY","Value":"${OPENAI_API_KEY}"},{"Name":"CORS_ORIGIN","Value":"${CORS_ORIGIN}"},{"Name":"NODE_ENV","Value":"production"}]}}}
+JSON
+)
+
+          if [ -n "$EXISTING_ARN" ]; then
+            echo "Updating existing backend service"
+            aws apprunner update-service --service-arn "$EXISTING_ARN" --source-configuration "$SRC_CFG"
+            ARN=$EXISTING_ARN
+          else
+            echo "Creating backend service"
+            CREATE_OUT=$(aws apprunner create-service --service-name $SERVICE_NAME --source-configuration "$SRC_CFG" --instance-configuration '{"Cpu":"1024","Memory":"2048"}')
+            ARN=$(echo "$CREATE_OUT" | jq -r '.Service.ServiceArn')
+          fi
+
+          echo "Waiting for backend to be RUNNING..."
+          aws apprunner wait service-running --service-arn $ARN
+          BACKEND_URL=$(aws apprunner describe-service --service-arn $ARN --query 'Service.ServiceUrl' --output text)
+          echo "Backend URL: $BACKEND_URL"
+          echo "BACKEND_URL=$BACKEND_URL" > backend_url.txt
+
+      - name: Build & push client image with backend URL
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          BACKEND_URL=$(cat backend_url.txt | sed 's/BACKEND_URL=//')
+          echo "Building client with VITE_API_URL=$BACKEND_URL"
+          cd client
+          docker build --build-arg VITE_API_URL=$BACKEND_URL -t $ECR_REGISTRY/studybuddy-client:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/studybuddy-client:$IMAGE_TAG
+
+      - name: Create or update frontend App Runner service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE_URI=${ECR_REGISTRY}/studybuddy-client:${IMAGE_TAG}
+          SERVICE_NAME=studybuddy-frontend
+
+          EXISTING_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text || true)
+
+          SRC_CFG=$(cat <<JSON
+{"ImageRepository":{"ImageIdentifier":"${IMAGE_URI}","ImageRepositoryType":"ECR","ImageConfiguration":{"Port":"80"}}}
+JSON
+)
+
+          if [ -n "$EXISTING_ARN" ]; then
+            echo "Updating frontend service"
+            aws apprunner update-service --service-arn "$EXISTING_ARN" --source-configuration "$SRC_CFG"
+            ARN=$EXISTING_ARN
+          else
+            echo "Creating frontend service"
+            CREATE_OUT=$(aws apprunner create-service --service-name $SERVICE_NAME --source-configuration "$SRC_CFG" --instance-configuration '{"Cpu":"512","Memory":"1024"}')
+            ARN=$(echo "$CREATE_OUT" | jq -r '.Service.ServiceArn')
+          fi
+
+          aws apprunner wait service-running --service-arn $ARN
+          FRONTEND_URL=$(aws apprunner describe-service --service-arn $ARN --query 'Service.ServiceUrl' --output text)
+          echo "Frontend URL: $FRONTEND_URL"
+          echo "Backend URL: $BACKEND_URL"
