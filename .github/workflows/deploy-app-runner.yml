@@ -62,8 +62,8 @@ jobs:
           SERVICE_NAME=studybuddy-backend
 
           echo "Preparing backend source configuration JSON"
-            jq -n --arg img "$IMAGE_URI" --arg db "$DATABASE_URL" --arg jwt "$JWT_SECRET" --arg openai "$OPENAI_API_KEY" --arg cors "$CORS_ORIGIN" \
-              '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "4000", "RuntimeEnvironmentVariables": {"DATABASE_URL": $db, "JWT_SECRET": $jwt, "OPENAI_API_KEY": $openai, "CORS_ORIGIN": $cors, "NODE_ENV": "production"}}}}' \
+            jq -n --arg img "$IMAGE_URI" --arg db "$DATABASE_URL" --arg jwt "$JWT_SECRET" --arg openai "$OPENAI_API_KEY" --arg cors "$CORS_ORIGIN" --arg role "arn:aws:iam::<YOUR_ACCOUNT_ID>:role/AppRunnerECRAccessRole" \
+              '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "4000", "RuntimeEnvironmentVariables": {"DATABASE_URL": $db, "JWT_SECRET": $jwt, "OPENAI_API_KEY": $openai, "CORS_ORIGIN": $cors, "NODE_ENV": "production"}}}, "AuthenticationConfiguration": {"AccessRoleArn": $role}}' \
               > /tmp/backend-src.json
 
           EXISTING_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text || true)
