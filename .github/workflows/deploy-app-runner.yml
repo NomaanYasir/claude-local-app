@@ -24,7 +24,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Install tools
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -32,17 +34,19 @@ jobs:
 
       - name: Ensure ECR repos exist
         run: |
-          aws ecr describe-repositories --repository-names studybuddy-server || aws ecr create-repository --repository-name studybuddy-server
-          aws ecr describe-repositories --repository-names studybuddy-client || aws ecr create-repository --repository-name studybuddy-client
+          aws ecr describe-repositories --repository-names studybuddy-server >/dev/null 2>&1 || aws ecr create-repository --repository-name studybuddy-server
+          aws ecr describe-repositories --repository-names studybuddy-client >/dev/null 2>&1 || aws ecr create-repository --repository-name studybuddy-client
 
       - name: Build & push server image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          set -euo pipefail
+          echo "Building server image"
           cd server
-          docker build -t $ECR_REGISTRY/studybuddy-server:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/studybuddy-server:$IMAGE_TAG
+          docker build -t ${ECR_REGISTRY}/studybuddy-server:${IMAGE_TAG} .
+          docker push ${ECR_REGISTRY}/studybuddy-server:${IMAGE_TAG}
 
       - name: Create or update backend App Runner service
         env:
@@ -52,31 +56,31 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           set -euo pipefail
           IMAGE_URI=${ECR_REGISTRY}/studybuddy-server:${IMAGE_TAG}
           SERVICE_NAME=studybuddy-backend
 
+          echo "Preparing backend source configuration JSON"
+          jq -n --arg img "$IMAGE_URI" --arg db "$DATABASE_URL" --arg jwt "$JWT_SECRET" --arg openai "$OPENAI_API_KEY" --arg cors "$CORS_ORIGIN" \
+            '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "4000", "RuntimeEnvironmentVariables": [{"Name": "DATABASE_URL", "Value": $db}, {"Name": "JWT_SECRET", "Value": $jwt}, {"Name": "OPENAI_API_KEY", "Value": $openai}, {"Name": "CORS_ORIGIN", "Value": $cors}, {"Name": "NODE_ENV", "Value": "production"}]}}}' \
+            > /tmp/backend-src.json
+
           EXISTING_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text || true)
 
-          SRC_CFG=$(cat <<JSON
-{"ImageRepository":{"ImageIdentifier":"${IMAGE_URI}","ImageRepositoryType":"ECR","ImageConfiguration":{"Port":"4000","RuntimeEnvironmentVariables":[{"Name":"DATABASE_URL","Value":"${DATABASE_URL}"},{"Name":"JWT_SECRET","Value":"${JWT_SECRET}"},{"Name":"OPENAI_API_KEY","Value":"${OPENAI_API_KEY}"},{"Name":"CORS_ORIGIN","Value":"${CORS_ORIGIN}"},{"Name":"NODE_ENV","Value":"production"}]}}}
-JSON
-)
-
           if [ -n "$EXISTING_ARN" ]; then
-            echo "Updating existing backend service"
-            aws apprunner update-service --service-arn "$EXISTING_ARN" --source-configuration "$SRC_CFG"
+            echo "Updating existing backend service: $EXISTING_ARN"
+            aws apprunner update-service --service-arn "$EXISTING_ARN" --source-configuration file:///tmp/backend-src.json
             ARN=$EXISTING_ARN
           else
-            echo "Creating backend service"
-            CREATE_OUT=$(aws apprunner create-service --service-name $SERVICE_NAME --source-configuration "$SRC_CFG" --instance-configuration '{"Cpu":"1024","Memory":"2048"}')
+            echo "Creating backend service: $SERVICE_NAME"
+            CREATE_OUT=$(aws apprunner create-service --service-name $SERVICE_NAME --source-configuration file:///tmp/backend-src.json --instance-configuration '{"Cpu":"1024","Memory":"2048"}')
             ARN=$(echo "$CREATE_OUT" | jq -r '.Service.ServiceArn')
           fi
 
           echo "Waiting for backend to be RUNNING..."
           aws apprunner wait service-running --service-arn $ARN
+
           BACKEND_URL=$(aws apprunner describe-service --service-arn $ARN --query 'Service.ServiceUrl' --output text)
           echo "Backend URL: $BACKEND_URL"
           echo "BACKEND_URL=$BACKEND_URL" > backend_url.txt
@@ -86,11 +90,12 @@ JSON
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          set -euo pipefail
           BACKEND_URL=$(cat backend_url.txt | sed 's/BACKEND_URL=//')
           echo "Building client with VITE_API_URL=$BACKEND_URL"
           cd client
-          docker build --build-arg VITE_API_URL=$BACKEND_URL -t $ECR_REGISTRY/studybuddy-client:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/studybuddy-client:$IMAGE_TAG
+          docker build --build-arg VITE_API_URL="$BACKEND_URL" -t ${ECR_REGISTRY}/studybuddy-client:${IMAGE_TAG} .
+          docker push ${ECR_REGISTRY}/studybuddy-client:${IMAGE_TAG}
 
       - name: Create or update frontend App Runner service
         env:
@@ -101,24 +106,23 @@ JSON
           IMAGE_URI=${ECR_REGISTRY}/studybuddy-client:${IMAGE_TAG}
           SERVICE_NAME=studybuddy-frontend
 
+          jq -n --arg img "$IMAGE_URI" '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "80"}}}' > /tmp/frontend-src.json
+
           EXISTING_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text || true)
 
-          SRC_CFG=$(cat <<JSON
-{"ImageRepository":{"ImageIdentifier":"${IMAGE_URI}","ImageRepositoryType":"ECR","ImageConfiguration":{"Port":"80"}}}
-JSON
-)
-
           if [ -n "$EXISTING_ARN" ]; then
-            echo "Updating frontend service"
-            aws apprunner update-service --service-arn "$EXISTING_ARN" --source-configuration "$SRC_CFG"
+            echo "Updating frontend service: $EXISTING_ARN"
+            aws apprunner update-service --service-arn "$EXISTING_ARN" --source-configuration file:///tmp/frontend-src.json
             ARN=$EXISTING_ARN
           else
-            echo "Creating frontend service"
-            CREATE_OUT=$(aws apprunner create-service --service-name $SERVICE_NAME --source-configuration "$SRC_CFG" --instance-configuration '{"Cpu":"512","Memory":"1024"}')
+            echo "Creating frontend service: $SERVICE_NAME"
+            CREATE_OUT=$(aws apprunner create-service --service-name $SERVICE_NAME --source-configuration file:///tmp/frontend-src.json --instance-configuration '{"Cpu":"512","Memory":"1024"}')
             ARN=$(echo "$CREATE_OUT" | jq -r '.Service.ServiceArn')
           fi
 
+          echo "Waiting for frontend to be RUNNING..."
           aws apprunner wait service-running --service-arn $ARN
+
           FRONTEND_URL=$(aws apprunner describe-service --service-arn $ARN --query 'Service.ServiceUrl' --output text)
           echo "Frontend URL: $FRONTEND_URL"
           echo "Backend URL: $BACKEND_URL"
