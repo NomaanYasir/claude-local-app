@@ -63,7 +63,7 @@ jobs:
 
           echo "Preparing backend source configuration JSON"
           jq -n --arg img "$IMAGE_URI" --arg db "$DATABASE_URL" --arg jwt "$JWT_SECRET" --arg openai "$OPENAI_API_KEY" --arg cors "$CORS_ORIGIN" \
-            '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "4000", "RuntimeEnvironmentVariables": [{"Name": "DATABASE_URL", "Value": $db}, {"Name": "JWT_SECRET", "Value": $jwt}, {"Name": "OPENAI_API_KEY", "Value": $openai}, {"Name": "CORS_ORIGIN", "Value": $cors}, {"Name": "NODE_ENV", "Value": "production"}]}}}' \
+            '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "4000", "RuntimeEnvironmentVariables": {"DATABASE_URL": $db, "JWT_SECRET": $jwt, "OPENAI_API_KEY": $openai, "CORS_ORIGIN": $cors, "NODE_ENV": "production"}}}}' \
             > /tmp/backend-src.json
 
           EXISTING_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text || true)
