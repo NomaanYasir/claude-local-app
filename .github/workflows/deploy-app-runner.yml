@@ -106,7 +106,7 @@ jobs:
           IMAGE_URI=${ECR_REGISTRY}/studybuddy-client:${IMAGE_TAG}
           SERVICE_NAME=studybuddy-frontend
 
-          jq -n --arg img "$IMAGE_URI" '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "80"}}}' > /tmp/frontend-src.json
+          jq -n --arg img "$IMAGE_URI" --arg role "arn:aws:iam::<YOUR_ACCOUNT_ID>:role/AppRunnerECRAccessRole" '{"ImageRepository": {"ImageIdentifier": $img, "ImageRepositoryType": "ECR", "ImageConfiguration": {"Port": "80"}}, "AuthenticationConfiguration": {"AccessRoleArn": $role}}' > /tmp/frontend-src.json
 
           EXISTING_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='$SERVICE_NAME'].ServiceArn" --output text || true)
 
