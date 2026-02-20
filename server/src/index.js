@@ -3,7 +3,12 @@ const app = require('./app');
 
 const { execSync } = require('child_process');
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
+
+console.log("Server starting on", PORT);
+
+process.on("unhandledRejection", console.error);
+process.on("uncaughtException", console.error);
 // In production, ensure critical secrets are configured
 if (process.env.NODE_ENV === 'production') {
   if (!process.env.JWT_SECRET) {
