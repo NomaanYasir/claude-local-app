@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-const API = process.env.API_URL || 'http://localhost:4000';
+const API = process.env.API_URL || 'https://crp7vvzfmh.us-east-1.awsapprunner.com';
 
 function ok(cond, msg){ if (!cond) { console.error('FAIL:', msg); process.exit(2); } }
 
