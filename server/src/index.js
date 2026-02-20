@@ -30,6 +30,6 @@ try {
   console.warn('prisma migrate deploy failed (continuing):', err.message || err);
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
