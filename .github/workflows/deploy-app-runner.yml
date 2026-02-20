@@ -87,14 +87,12 @@ jobs:
       - name: Build & push client image with backend URL
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
-          BACKEND_URL=$(cat backend_url.txt | sed 's/BACKEND_URL=//')
-          echo "Building client with VITE_API_URL=$BACKEND_URL"
+          echo "Building client with VITE_API_URL=https://crp7vzzfmh.us-east-1.awsapprunner.com"
           cd client
-          docker build --build-arg VITE_API_URL="$BACKEND_URL" -t ${ECR_REGISTRY}/studybuddy-client:${IMAGE_TAG} .
-          docker push ${ECR_REGISTRY}/studybuddy-client:${IMAGE_TAG}
+          docker build --build-arg VITE_API_URL="https://crp7vzzfmh.us-east-1.awsapprunner.com" -t ${ECR_REGISTRY}/studybuddy-client:latest .
+          docker push ${ECR_REGISTRY}/studybuddy-client:latest
 
       - name: Create or update frontend App Runner service
         env:
