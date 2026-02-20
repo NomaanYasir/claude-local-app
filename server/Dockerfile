@@ -1,5 +1,6 @@
 FROM node:18-slim
 WORKDIR /app
+ENV DATABASE_URL="file:/tmp/dev.db"
 COPY package*.json ./
 RUN npm ci
 COPY prisma ./prisma

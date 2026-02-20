@@ -39,14 +39,13 @@ jobs:
 
       - name: Build & push server image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          REGION: us-east-1
+          ACCOUNT_ID: 158694914811
         run: |
           set -euo pipefail
           echo "Building server image"
-          cd server
-          docker build -t ${ECR_REGISTRY}/studybuddy-server:${IMAGE_TAG} .
-          docker push ${ECR_REGISTRY}/studybuddy-server:${IMAGE_TAG}
+          docker build -t $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/studybuddy-server:latest ./server
+          docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/studybuddy-server:latest
 
       - name: Create or update backend App Runner service
         env:
@@ -58,7 +57,7 @@ jobs:
           CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
         run: |
           set -euo pipefail
-          IMAGE_URI=${ECR_REGISTRY}/studybuddy-server:${IMAGE_TAG}
+          IMAGE_URI=158694914811.dkr.ecr.us-east-1.amazonaws.com/studybuddy-server:latest
           SERVICE_NAME=studybuddy-backend
 
           echo "Preparing backend source configuration JSON"
